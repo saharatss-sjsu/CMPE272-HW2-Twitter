@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>CMPE-272: HW #2 - Twitter Service</title>
+	<style>
+		*{ box-sizing: border-box; }
+		.title{ margin-bottom: 16px; }
+		.main{
+			width: 400px;
+			max-width: calc(100% - 40px);
+			margin: auto;
+			margin-top: 20px;
+			font-family: Arial, Helvetica, sans-serif;
+		}
+		.card{
+			border: #ddd 1px solid;
+			border-radius: 8px;
+			padding: 12px;
+			margin-bottom: 12px;
+		}
+		textarea{
+			border: #ddd 1px solid;
+			border-radius: 8px;
+			width: 100%;
+			padding: 8px;
+		}
+		textarea:focus{
+			outline: none;
+			border-color: #3366ff;
+		}
+	</style>
+</head>
+<body>
+	<div class="main">
+		<div class="title">CMPE-272: HW #2 - Twitter Service</div>
+		<div class="card">
+			<textarea id="create_textbox" rows="5"></textarea>
+			<button id="create_button">Create</button>
+		</div>
+		<div id="tweets_container"></div>
+	</div>
+	<script>
+		let create_textbox   = document.getElementById('create_textbox');
+		let create_button    = document.getElementById('create_button');
+		let tweets_container = document.getElementById('tweets_container');
+
+		create_button.addEventListener('click', ()=>{
+			tweet_create();
+		})
+
+		function tweet_create(){
+			let text = create_textbox.value;
+			fetch('/api/tweet/create', {
+				method: 'POST',
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					'text': text,
+				})
+			}).then(response => response.json()).then(response => {
+				console.log(response)
+				let tweet_id = response[0].id;
+				tweets_container.innerHTML += `<div class="card" id="tweet_${tweet_id}">${text}<br><br><button onclick="tweet_delete('${tweet_id}')">Delete (id: ${tweet_id})</button></div>`;
+			})
+		}
+
+		function tweet_delete(tweet_id){
+			fetch(`/api/tweet/delete/${tweet_id}`, {
+				method: 'DELETE',
+			}).then(response => response.json()).then(response => {
+				console.log(response)
+				if(response[0]['deleted'] == true){
+					document.getElementById(`tweet_${tweet_id}`).innerHTML = `<span style="color: red">The tweet (id: ${tweet_id}) was deleted</span>`;
+				}else{
+					document.getElementById(`tweet_${tweet_id}`).innerHTML = `<span style="color: red">The tweet (id: ${tweet_id}) cannot delete</span>`;
+				}
+			})
+		}
+
+	</script>
+</body>
+</html>
